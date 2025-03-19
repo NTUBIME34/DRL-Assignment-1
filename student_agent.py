@@ -75,16 +75,21 @@
 import random
 import numpy as np
 import pickle
+import gym
 
 # 載入預先訓練的 Q-table
 with open("q_table.pkl", "rb") as f:
     Q_table = pickle.load(f)
 
+def get_state_key(state):
+    """將狀態轉為可哈希的鍵"""
+    return tuple(state)
+
 def get_action(obs):
     """
     使用 Q-table 選擇最佳行動
     """
-    state_key = tuple(obs)
+    state_key = get_state_key(obs)
     if state_key in Q_table:
         return np.argmax(Q_table[state_key])  # 選擇最高 Q 值的行動
     else:
