@@ -75,7 +75,6 @@
 import random
 import numpy as np
 import pickle
-from simple_custom_taxi_env import SimpleTaxiEnv
 
 # 載入預先訓練的 Q-table
 with open("q_table.pkl", "rb") as f:
