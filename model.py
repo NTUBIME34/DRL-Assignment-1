@@ -7,13 +7,13 @@ from simple_custom_taxi_env import SimpleTaxiEnv
 # env = env.DynamicTaxiEnv()
 
 
-
+pass_inx = -1
 dest_inx = -1
 target = 0
 
 def Q_learning_state(state, action, picked, prev_state): #now state, last action, picked, target, reward_env
 
-
+    global pass_inx
     global dest_inx
     global target
 
@@ -34,32 +34,20 @@ def Q_learning_state(state, action, picked, prev_state): #now state, last action
     if distance[target] == 0 :
         if destination_look == True:
             dest_inx = target
+        if passenger_look == True:
+            pass_inx = target
         target = (target + 1) % 4
-    # elif distance[1] == 0 and target == 1:
-    #     target = 2
-    #     if destination_look == True:
-    #         dest_inx = 1
-    # elif distance[2] == 0 and target == 2:
-    #     target = 3
-    #     if destination_look == True:
-    #         dest_inx = 2
-    # elif distance[3] == 0 and target == 3:
-    #     target = 0
-    #     if destination_look == True:
-    #         dest_inx = 3
 
     if picked == False:
         if action ==4:
             if passenger_look == 1 and prev_state[14] == 1:
-                if last_state_distance[0] ==0:
-                    picked = True
-                elif last_state_distance[1] ==0:
-                    picked = True
-                elif last_state_distance[2] ==0:
-                    picked = True
-                elif last_state_distance[3] ==0:
+                if last_state_distance[pass_inx] ==0:
                     picked = True
 
+
+    if picked == False:
+        if pass_inx != -1:
+            target = pass_inx
     if picked == True:
         if dest_inx != -1:
             target = dest_inx
@@ -81,14 +69,14 @@ def Q_learning_state(state, action, picked, prev_state): #now state, last action
 
 
 # ===== Q-Learning 超參數 =====
-episodes = 1000000        # 訓練回合數
+episodes = 500000        # 訓練回合數
 max_steps = 50         # 每回合最大步數
 alpha = 0.1              # 學習率
 gamma = 0.99             # 折扣因子
 
 epsilon_start = 1.0            # 初始探索率
 min_epsilon = 0.01       # 探索率下限
-decay_rate = 0.99999     # 衰減速率
+decay_rate = 0.99999    # 衰減速率
 
 reward_shape = True      # 是否使用 reward shaping
 q_table = None           # Q-table
@@ -107,6 +95,7 @@ epsilon = epsilon_start
 # ===== 訓練流程 =====
 successes = 0
 for episode in range(episodes):
+    # 準備訓練環境
     state, _ = env.reset()  # reset() 回傳 (state, info)
     prev_state = state
     q_state = Q_learning_state(state, 0, picked=False, prev_state=state)
@@ -131,6 +120,7 @@ for episode in range(episodes):
 
     jump = False
 
+    pass_inx = -1
     dest_inx = -1
     target = 0
 
@@ -148,8 +138,7 @@ for episode in range(episodes):
 
         # 執行動作
         next_state, reward_env, done, _ = env.step(action)
-        prev_state = state
-        next_q_state = Q_learning_state(next_state, action, picked, prev_state)
+        next_q_state = Q_learning_state(next_state, action, picked, state)
         next_passenger_look = next_q_state[0]
         next_destination_look = next_q_state[1]
         next_obstacle_north = next_q_state[2]
@@ -171,58 +160,45 @@ for episode in range(episodes):
             # #currect drop off 50  can be shaped
             # #heat wall -5
 
+            if reward_env < -6:
+                shaped_reward += 5
+            elif reward_env < -1:
+                shaped_reward += 2
+            elif reward_env == -0.1:
+                shaped_reward += 0.09 
             # #coreect pick up
             if picked == False and next_picked == True:
-                shaped_reward += 20
+                shaped_reward += 1
             # #incorrect drop off
             if action == 5 and  reward_env<40:
-                # shaped_reward += -20
+                shaped_reward += -2
                 if picked == True:
-                    shaped_reward += -500
+                    shaped_reward += -50
                     jump = True
 
             if picked == False:
-               if passenger_look == 0 and next_passenger_look == 1:
-                   shaped_reward += 10
+                if passenger_look == 0 and next_passenger_look == 1:
+                   shaped_reward += 1
+                if destination_look == 0 and next_destination_look == 1:
+                    shaped_reward += 0.5
             if picked == True:
-               if destination_look == 0 and next_destination_look == 1:
-                   shaped_reward += 20
+                if destination_look == 0 and next_destination_look == 1:
+                   shaped_reward += 2
 
             if picked == True and dest_inx != -1:
                 if distance_x == 0 and distance_y == 0:
                     shaped_reward += 3
+                # else:
+                #     shaped_reward += -3
 
             else:
                 if distance_x == 0 and distance_y == 0:
                     shaped_reward += 1
+                # else:
+                #     shaped_reward += -1
 
-            if passenger_look == 1 and destination_look == 1 and picked == True and dest_inx != -1 and distance_x == 0 and distance_y == 0:
-                shaped_reward += 50
-
-            # #get closer to passenger
-            # if passenger_look == False and next_passenger_look == True:
-            #     shaped_reward += 3
-            # if passenger_look == True and next_passenger_look == False:
-            #     shaped_reward += -5
-            
-            # #get closer to destination
-            # if picked == False:
-            #     if distance > next_distance:
-            #         shaped_reward += 1/(next_distance+1)
-            #     else:
-            #         shaped_reward -= 1.3/(distance+1)
-            # #get closer to destination
-            # if picked == True:
-            #     if distance > next_distance:
-            #         shaped_reward += 2/(next_distance+1)
-            #     else:
-            #         shaped_reward -= 2.5/(distance+1)
-            # #do not render too much
-            # if episode_step == fuel_limit-1:
-            #     shaped_reward -= 10
-            # if done and step < fuel_limit:
-            #     fuel_left = fuel_limit - step
-            #     shaped_reward += 5 * (fuel_limit/fuel_left)
+            if passenger_look == 1 and destination_look == 1 and picked == True and dest_inx != -1 and distance_x == 0 and distance_y == 0 and action ==5:
+                shaped_reward += 20
 
 
  
@@ -244,8 +220,6 @@ for episode in range(episodes):
         if done and step < fuel_limit-10:
             successes += 1
             break
-        prev_q_state = q_state
-        prev_state = state
         state = next_state
         q_state = next_q_state
         passenger_look = next_passenger_look
@@ -257,6 +231,7 @@ for episode in range(episodes):
         picked = next_picked
         distance_x = next_distance_x
         distance_y = next_distance_y
+        last_action = action
 
 
     rewards_per_episode.append(env_reward_total)

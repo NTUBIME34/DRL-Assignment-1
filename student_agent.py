@@ -3,89 +3,6 @@ import random
 import numpy as np
 import pickle
 
-
-# # target = 0
-
-# # def Q_learning_state(state, action, picked):
-
-# #     global target
-
-# #     taxi_row = state[0] # 1
-# #     taxi_col = state[1] # 2
-# #     station = [[state[2], state[3]], [state[4], state[5]], [state[6], state[7]], [state[8], state[9]]]
-# #     distance_x = [abs(taxi_row - station[i][0])  for i in range(4)]
-# #     distance_y = [abs(taxi_col - station[i][1])  for i in range(4)]
-# #     distance = [distance_x[i] + distance_y[i] for i in range(4)]
-# #     obstacle = [state[10], state[11], state[12], state[13]]
-# #     passenger_look = state[14]
-# #     destination_look = state[15]
-
-
-# #     if picked == False:
-# #         if  state[14] == 1 and action == 4:
-# #             picked = True
-# #     else:
-# #         if action == 5:
-# #             picked = False
-
-# #     if distance[0]==0 and target == 0:
-# #         target = 1
-# #     elif distance[1]==0 and target == 1:
-# #         target = 2
-# #     elif distance[2]==0 and target == 2:
-# #         target = 3
-# #     elif distance[3]==0 and target == 3:
-# #         target = 0
-
-# #     if picked == False and state[14] == 1:
-# #         target = distance.index(min(distance))  # 找到最小距離的索引
-# #     elif picked == True and state[15] == 1:
-# #         target = distance.index(min(distance))
-
-# #     # Safety check to ensure target is valid before using it
-# #     if target < 0 or target >= len(distance):
-# #         target = 0  # Default to first station if invalid
-
-
-# #     push_distance = distance[target]
-
-
-# #     # return (state)
-# #     return (passenger_look, destination_look, obstacle[0], obstacle[1], obstacle[2], obstacle[3], picked, push_distance, action)
-
-
-
-# # with open("q_table.pkl", "rb") as f:
-# #     Q_table = pickle.load(f)
-
-
-
-# # action = 0
-# # picked = False
-# # reward_env = 0
-# # def get_action(obs):
-# #     global action
-# #     global target
-# #     global picked
-# #     global reward_env
-# #     state = Q_learning_state(obs, action, picked)
-# #     if state in Q_table:
-
-# #         action = np.argmax(Q_table[state])
-# #         picked = state[6]
-
-# #         print("by q_table")
-# #         print(action)
-# #         print(state)
-# #         return np.argmax(Q_table[state])  # 選擇最高 Q 值的行動
-# #     else:
-# #         return np.random.choice([0, 1, 2, 3, 4, 5])  #
-
-
-
-
-
-
 dest_inx = -1
 
 action = 0
@@ -171,6 +88,7 @@ def Q_learning_state(state, action, picked, prev_state): #now state, last action
 
 with open("q_table.pkl", "rb") as f:
     Q_table = pickle.load(f)
+    print (Q_table)
 
 
 conunt_pre = 0
